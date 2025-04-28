@@ -7,7 +7,6 @@ Cart::Cart()
     _w = (GetScreenWidth()*0.8f)/5;
     _h = (GetScreenHeight()*0.8f)/6;
     _level = 1;
-    _subcart = NULL;
 }
 Cart::Cart(std::string pname,enum CartType ptype,Color pcol1,Color pcol2) : Cart()
 {
@@ -49,12 +48,7 @@ int Cart::GetHeight()
 {
     return _h;
 }
-void Cart::SetSubCart(Cart cart)
-{
-    if(_subcart==NULL)
-        _subcart= new Cart();
-    *_subcart = cart;
-}
+
 
 void Cart::Fuse(Cart cart)
 {
@@ -87,8 +81,6 @@ void Cart::Draw(int x, int y)
         DrawText(_name.c_str(),x+5,y+5,19,_col1);
         const char* slvl = TextFormat("lvl %d",_level);
         DrawText(slvl,x+5,y+22,19,_col1);
-        if(_subcart!=NULL)
-            _subcart->MiniDraw(x,y+_h/2);
     }
 }
 
@@ -127,6 +119,7 @@ Cart(name,CartTypeMonster,BLUE,GREEN)
 {
 
 }
+
 
 Cart* Board::_Get(int x, int y)
 {
@@ -187,6 +180,14 @@ Cart Board::GetInvoc(int team, int pos)
 {
     return _lstcart[2+(team*3)][pos];
 }
+Cart Board::Generate()
+{
+    int r = GetRandomValue(0,2);
+    if(r==0) return CartItem("potion");
+    else if(r==1) return CartEquip("sword");
+    else if(r==2) return CartMonster("wolf");
+    return Cart();
+}
 
 
 bool collide(int x,int y,int w,int h,int x2,int y2,int w2,int h2)
@@ -203,46 +204,40 @@ void Board::Draw()
         Vector2 pos = _posb[j][i];
 
         if(j>2)
-        if(collide( pos.x,
-            pos.y,c.GetWidth(),c.GetHeight(),GetMouseX(),GetMouseY(),10,10))
         {
-            if( IsMouseButtonDown(0))
+            if(collide( pos.x,
+                pos.y,c.GetWidth(),c.GetHeight(),GetMouseX(),GetMouseY(),10,10))
             {
-                if(c.IsNull()==false && _cselect.IsNull()==true)
+                if( IsMouseButtonDown(0))
                 {
-                    Select(c);
-                   _Set(i,j,Cart());
+                    if(c.IsNull()==false && _cselect.IsNull()==true)
+                    {
+                        Select(c);
+                        _Set(i,j,Cart());
+                    }
+                    else if(j==5 && c.IsNull() && _cselect.IsNull()==true)
+                    {
+                        _lstcart[j][i] = Generate();
+                    }
                 }
-                else if(j==5 && c.IsNull() && _cselect.IsNull()==true)
+                else if( IsMouseButtonReleased(0))
                 {
-                    _lstcart[j][i] = CartItem("potion");
+                    if(c.IsNull() &&
+                        _cselect.IsNull()==false)
+                    {
+                        _Set(i,j,_cselect);
+                        Deselect();
+                    }
+                    else if(c.IsNull()==false && _cselect.IsNull()==false &&
+                        c.GetType()==_cselect.GetType() &&
+                        c.GetName()==_cselect.GetName()
+                    )
+                    {
+                        //fuse cart
+                        _Get(i,j)->Fuse(_cselect);
+                        Deselect();
 
-                }
-            }
-            else if( IsMouseButtonReleased(0))
-            {
-                if(c.IsNull() &&
-                    _cselect.IsNull()==false)
-                {
-                    _Set(i,j,_cselect);
-                    Deselect();
-                }
-                else if(c.IsNull()==false && _cselect.IsNull()==false &&
-                    c.GetType()==_cselect.GetType()
-                )
-                {
-                    //fuse cart
-                    _Get(i,j)->Fuse(_cselect);
-                    Deselect();
-
-                }
-                else if(c.IsNull()==false && _cselect.IsNull()==false &&
-                    c.GetType()== CartTypeMonster &&
-                    _cselect.GetType()== CartTypeEquip
-                )
-                {
-                    _Get(i,j)->SetSubCart(_cselect);
-                    Deselect();
+                    }
                 }
             }
         }
@@ -267,9 +262,7 @@ void Board::Draw()
 Exodus::Exodus()
 {
     _board.SetHand(0,0,CartItem("potion"));
-    Cart cm = CartMonster("wolve");
-    cm.SetSubCart(CartEquip("t"));
-    _board.SetHand(0,4,cm);//CartMonster("wolve"));
+    _board.SetHand(0,4,CartMonster("wolve"));
     _board.SetEquip(0,0,CartEquip("t"));
     _board.SetEquip(1,4,CartEquip("t"));
     Cart c = CartMonster("t");

@@ -1,5 +1,7 @@
 #pragma once
 #include "raylib.h"
+#include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -22,7 +24,6 @@ class Cart
 {
     std::string _name;
     enum CartType _type;
-    Cart* _subcart;
     int _level;
     float _w;
     float _h;
@@ -38,7 +39,6 @@ class Cart
     void SetLevel(int level);
     int GetWidth();
     int GetHeight();
-    void SetSubCart(Cart cart);
     void Fuse(Cart cart);
     void MiniDraw(int x,int y);
     void Draw(int x,int y);
@@ -82,6 +82,7 @@ class Board
     Cart GetHand(int team,int pos);
     Cart GetEquip(int team,int pos);
     Cart GetInvoc(int team,int pos);
+    Cart Generate();
     void Draw();
 };
 
