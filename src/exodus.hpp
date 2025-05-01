@@ -15,15 +15,23 @@ enum CartType
 enum CartEffet
 {
     CartEffetNULL,
-    CartEffetLevelUp,
-    CartEffetLevelDown,
-    CartEffetHeal,
-    CartEffetDamage
+    CartObjLevelUp,
+    CartObjLevelDown,
+    CartObjHeal,
+    CartObjDamage,
+    CartEquipRange,
+    CartEquipDefence,
+    CartEquipAttack,
+    CartEquipRevive
 };
 class Cart
 {
     std::string _name;
     enum CartType _type;
+    enum CartEffet _effet;
+    enum CartEffet _equipeffet;
+    int _equiplevel;
+    std::string _equipname;
     int _level;
     float _w;
     float _h;
@@ -34,12 +42,17 @@ class Cart
     Cart(std::string name,enum CartType type,Color pcol1,Color pcol2);
     bool IsNull();
     std::string GetName();
+    void SetName(std::string pname);
     enum CartType GetType();
     int GetLevel();
     void SetLevel(int level);
+    enum CartEffet GetEffet();
+    void SetEffet(enum CartEffet effet);
     int GetWidth();
     int GetHeight();
-    void Fuse(Cart cart);
+    bool Fuse(Cart cart);
+    bool Equip(Cart cart);
+    void UnEquip();
     void MiniDraw(int x,int y);
     void Draw(int x,int y);
     void DrawBoardHand(int x,int y);
@@ -49,19 +62,19 @@ class Cart
 class CartItem : public Cart
 {
     public:
-    CartItem(std::string name);
+    CartItem(enum CartEffet effet);
 };
 
 class CartEquip : public Cart
 {
     public:
-    CartEquip(std::string name);
+    CartEquip(enum CartEffet effet);
 };
 
 class CartMonster : public Cart 
 {
     public:
-    CartMonster(std::string name);
+    CartMonster(std::string name,int level);
 };
 #define BoardHeight 6
 #define BoardWidth 5

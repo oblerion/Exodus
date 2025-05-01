@@ -1,15 +1,17 @@
 #pragma once
-#include <map>
+#include <vector>
 #include "exodus.hpp"
 
-const std::map<std::string,Cart> cartitem = {
-{"potion",CartItem("potion")}
+const std::vector<Cart> cartitem = {
+    CartItem(CartObjHeal)
 };
 
-const std::map<std::string,Cart> cartequip = {
-    {"shield",CartEquip("shield")}
+const std::vector<Cart> cartequip = {
+    CartEquip(CartEquipDefence),
+    CartEquip(CartEquipAttack)
 };
 
-const std::map<std::string,Cart> cartmonster = {
-    {"wolf",CartItem("wolf")}
+const std::vector<Cart> cartmonster = {
+    CartMonster("sheep",1),
+    CartMonster("wolf",2)
 };

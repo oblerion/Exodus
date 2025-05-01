@@ -4,9 +4,13 @@ Cart::Cart()
 {
     _name = "";
     _type = CartTypeNULL;
+    _effet = CartEffetNULL;
     _w = (GetScreenWidth()*0.8f)/5;
     _h = (GetScreenHeight()*0.8f)/6;
     _level = 1;
+    _equipeffet = CartEffetNULL;
+    _equiplevel = 0;
+    _equipname = "";
 }
 Cart::Cart(std::string pname,enum CartType ptype,Color pcol1,Color pcol2) : Cart()
 {
@@ -24,6 +28,11 @@ std::string Cart::GetName()
 {
     return _name;
 }
+void Cart::SetName(std::string pname)
+{
+    _name = pname;
+}
+
 
 enum CartType Cart::GetType()
 {
@@ -38,6 +47,14 @@ void Cart::SetLevel(int level)
 {
     _level = level;
 }
+enum CartEffet Cart::GetEffet()
+{
+    return _effet;
+}
+void Cart::SetEffet(enum CartEffet effet)
+{
+    _effet = effet;
+}
 
 
 int Cart::GetWidth()
@@ -50,12 +67,50 @@ int Cart::GetHeight()
 }
 
 
-void Cart::Fuse(Cart cart)
+bool Cart::Fuse(Cart cart)
 {
-    if(cart.GetType()==_type && cart.GetName()==_name)
+    if(cart.GetType()==_type &&
+        cart.GetName()==_name)
     {
-        SetLevel(cart.GetLevel()+_level);
+        if(GetType()!=CartTypeMonster)
+        {
+            SetLevel(cart.GetLevel()+_level);
+        }
+        else
+        {
+            if(GetName()=="sheep")
+            {
+                SetName("wolf");
+                SetLevel(2);
+            }
+            else if(GetName()=="wolf")
+            {
+                SetName("cerberus");
+                SetLevel(3);
+            }
+
+        }
+        return true;
     }
+    return false;
+}
+bool Cart::Equip(Cart cart)
+{
+    if(cart.GetType()==CartTypeEquip &&
+        GetType()==CartTypeMonster)
+    {
+        _equipeffet = cart.GetEffet();
+        _equiplevel = cart.GetLevel();
+        _equipname = cart.GetName();
+        return true;
+    }
+    return false;
+}
+void Cart::UnEquip()
+{
+    _equipeffet=CartEffetNULL;
+    _equiplevel=0;
+    _equipname = "";
 }
 
 void Cart::MiniDraw(int x, int y)
@@ -81,6 +136,16 @@ void Cart::Draw(int x, int y)
         DrawText(_name.c_str(),x+5,y+5,19,_col1);
         const char* slvl = TextFormat("lvl %d",_level);
         DrawText(slvl,x+5,y+22,19,_col1);
+        if(_equipeffet != CartEffetNULL)
+        {
+            const int my = y + GetHeight()/2;
+            DrawRectangle(x-5,my+2,_w,_h/2,BLACK);
+            DrawRectangleLines(x,my,_w,_h/2,MAGENTA);
+            DrawRectangleLines(x-5,my+2,_w,_h/2,YELLOW);
+            DrawText(_equipname.c_str(),x+5,my+5,19,MAGENTA);
+            const char* slvl = TextFormat("lvl %d",_equiplevel);
+            DrawText(slvl,x+5,my+22,19,MAGENTA);
+        }
     }
 }
 
@@ -102,24 +167,43 @@ void Cart::DrawBoardHand(int x, int y)
 
 
 
-CartItem::CartItem(std::string name) :
-Cart(name,CartTypeItem,GRAY,WHITE)
+CartItem::CartItem(enum CartEffet effet) :
+Cart("",CartTypeItem,GRAY,WHITE)
 {
-
+    std::string lname="";
+    switch(effet)
+    {
+        case CartObjHeal: lname="potion";
+        break;
+        default:;
+    }
+    SetName(lname);
+    SetEffet(effet);
 }
 
 
-CartEquip::CartEquip(std::string name) :
-Cart(name,CartTypeEquip,MAGENTA,YELLOW)
+CartEquip::CartEquip(enum CartEffet effet) :
+Cart("",CartTypeEquip,MAGENTA,YELLOW)
 {
 
+    std::string lname = "";
+    switch(effet)
+    {
+        case CartEquipDefence : lname = "shield";
+        break;
+        case CartEquipAttack : lname = "sword";
+        break;
+        default:;
+    }
+    SetName(lname);
+    SetEffet(effet);
+
 }
-CartMonster::CartMonster(std::string name) :
+CartMonster::CartMonster(std::string name,int level) :
 Cart(name,CartTypeMonster,BLUE,GREEN)
 {
-
+    SetLevel(level);
 }
-
 
 Cart* Board::_Get(int x, int y)
 {
@@ -180,13 +264,27 @@ Cart Board::GetInvoc(int team, int pos)
 {
     return _lstcart[2+(team*3)][pos];
 }
+#include "carts.hpp"
+#include <cmath>
+#include <ctime>
+#define LUCKPOUR(p) (rand()%101 < p)
 Cart Board::Generate()
 {
-    int r = GetRandomValue(0,2);
-    if(r==0) return CartItem("potion");
-    else if(r==1) return CartEquip("sword");
-    else if(r==2) return CartMonster("wolf");
-    return Cart();
+    Cart c =  CartItem(CartObjHeal);
+    srand(time(0));
+    if(LUCKPOUR(25))
+    {
+        int r2 = GetRandomValue(0,1);
+        if(r2==0) c = CartEquip(CartEquipAttack);
+        else if(r2==1) c = CartEquip(CartEquipDefence);//cartequip.at(r2);
+    }//return CartEquip("sword");
+    else if(LUCKPOUR(35))
+    {
+
+        //c = cartmonster.at(r2);
+        c = CartMonster("sheep",1);
+    }//return CartMonster("wolf");
+    return c;
 }
 
 
@@ -228,15 +326,23 @@ void Board::Draw()
                         _Set(i,j,_cselect);
                         Deselect();
                     }
-                    else if(c.IsNull()==false && _cselect.IsNull()==false &&
-                        c.GetType()==_cselect.GetType() &&
-                        c.GetName()==_cselect.GetName()
-                    )
+                    else if(c.IsNull()==false && _cselect.IsNull()==false)
                     {
-                        //fuse cart
-                        _Get(i,j)->Fuse(_cselect);
-                        Deselect();
+                        if( c.GetType()==_cselect.GetType() &&
+                            c.GetName()==_cselect.GetName()
+                        )
+                        {
+                            //fuse cart
+                            if(_Get(i,j)->Fuse(_cselect))
+                            Deselect();
 
+                        }
+                        else if(c.GetType()==CartTypeMonster &&
+                                _cselect.GetType()==CartTypeEquip)
+                        {
+                            if(_Get(i,j)->Equip(_cselect))
+                            Deselect();
+                        }
                     }
                 }
             }
@@ -261,14 +367,14 @@ void Board::Draw()
 
 Exodus::Exodus()
 {
-    _board.SetHand(0,0,CartItem("potion"));
-    _board.SetHand(0,4,CartMonster("wolve"));
-    _board.SetEquip(0,0,CartEquip("t"));
-    _board.SetEquip(1,4,CartEquip("t"));
-    Cart c = CartMonster("t");
-    c.SetLevel(3);
-    _board.SetInvoc(1,0,c);
-    _board.SetInvoc(1,4,c);
+    // _board.SetHand(0,0,CartItem("potion"));
+    // _board.SetHand(0,4,CartMonster("wolve"));
+    // _board.SetEquip(0,0,CartEquip("t"));
+    // _board.SetEquip(1,4,CartEquip("t"));
+    // Cart c = CartMonster("t");
+    // c.SetLevel(3);
+    // _board.SetInvoc(1,0,c);
+    // _board.SetInvoc(1,4,c);
 
 }
 

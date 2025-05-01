@@ -27,7 +27,7 @@ if [ -f "src/main.cpp" ];then
 	CFLAGS2="-g -Wall -lm -L${LUAWIN}/lib -llua -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc -static-libstdc++" 
 fi
 #-static-libstdc++ -static-libgcc"
-INC2="-I${LUAWIN}/include -I${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
+INC2="-I../${LUAWIN}/include -I../${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
 EXEC2=${EXEC}".exe"
 DOBJ2="build/win86/"
 
@@ -117,7 +117,7 @@ elif [ "$1" == "web" ];then
 	if [ -f "src/main.cpp" ];then
 		cd src;
 		for i in "*.cpp" ;do
-			em++ -c $i -I$RAYLIBWEB/include -Isrc;
+			em++ -c $i -I../$RAYLIBWEB/include -Isrc;
 			#echo $TCC -c $i -I../include;
 		done;
 		cd ..;
