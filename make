@@ -6,7 +6,7 @@ LUAWIN="dep/lua-5.4.2/lua_win"
 LUAWEB="dep/lua-5.4.2/lua_web"
 RAYLIBLIN="dep/raylib-5.5_linux_amd64"
 RAYLIBWIN="dep/raylib-5.5_win32_mingw-w64"
-RAYLIBWEB="dep/raylib-5.5_webassembly"
+RAYLIBWEB="dep/raylib-5.0_webassembly"
 if [ $LINUXSTAT -eq 1 ];then
 	RAYLIBLIN="dep/raylib-5.5_linux_amd64_stat"
 fi

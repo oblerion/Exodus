@@ -8,6 +8,8 @@ EXEC=main
 
 all:
 	./make
+clean:
+	cd src && make clean
 # link run
 #
 # link: main.o atlas.o ui.o ui_runner.o ui_mainbar.o kbd_layout.o Palette.o Sprite.o ui_palette.o ui_sprite.o

@@ -69,7 +69,7 @@ endif
 all: link
 link: *.o
 	$(CC) *.o  $(LIB) $(FLAG) -o ../$(BIN)
-*.o:
+*.o: clean
 	$(CC) *.cpp -c $(INC)
 
 clean:
