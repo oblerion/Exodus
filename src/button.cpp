@@ -2,14 +2,15 @@
 
 Button::Button(float x,float y,float w,float h)
 {
+	timer = 0;
 	rect = {x,y,w,h};
 	active=true;
-	select=false;
+	state = ButtonDefault;
 }
 
 bool Button::IfSelect()
 {
-	return select;
+	return state==ButtonSelect;
 }
 
 Rectangle Button::GetRect()
@@ -20,22 +21,27 @@ Rectangle Button::GetRect()
 void Button::Reset()
 {
 	active=true;
-	select=false;
+	state = ButtonDefault;
 }
 
-bool Button::Draw()
+enum ButtonState Button::Draw()
 {
+	if(timer>0)
+		timer -= GetFrameTime();
+
 	if(active)
 	{
 		if(CheckCollisionRecs(rect,
 			(Rectangle){(float)GetMouseX(),(float)GetMouseY(),10,10}))
 		{
-			select=true;
-			if(IsMouseButtonDown(0))
-				return true;
+			state = ButtonSelect;
+			if(IsMouseButtonDown(0) && timer<=0){
+				state = ButtonPress;
+				timer = 0.5f;
+			}
 		}
 		else
-			select=false;
+			state = ButtonDefault;
 	}
-	return false;
+	return state;
 }

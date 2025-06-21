@@ -7,19 +7,25 @@
 #include <string>
 #include <vector>
 #include "cart.hpp"
-#include "cartItem.hpp"
-#include "cartEquip.hpp"
-#include "cartMonster.hpp"
 #include "player.hpp"
 #include "board.hpp"
 #include "turnManager.hpp"
+#include "SQLiteManager.hpp"
+
+#define EXODUS_VERSION "earlybuild 0.1"
 
 class Exodus
 {
+    bool _dbIsLoad;
+    SQLiteManager* _sqlitemanager;
     TurnManager _turnmanager;
+    CartManager* _cartmanager;
     Player _players[2];
     Board _board;
 public:
     Exodus();
+    ~Exodus();
+    bool DbIsLoad();
+    void DrawCartExplorer();
     void Draw();
 };

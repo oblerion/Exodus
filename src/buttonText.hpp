@@ -10,5 +10,5 @@ class ButtonText : public Button
 
 public:
 	ButtonText(float x,float y,std::string ptext,int size,Color pcolor);
-	bool Draw();
+	enum ButtonState Draw();
 };

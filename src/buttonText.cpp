@@ -1,7 +1,7 @@
 #include "buttonText.hpp"
 
 ButtonText::ButtonText(float x, float y, std::string ptext, int size, Color pcolor) :
-Button(x,y,(float)MeasureText(ptext.c_str(),size)*size,size)
+Button(x,y,(float)MeasureText(ptext.c_str(),size),size)
 {
 	sizefont = size;
 	text = ptext;
@@ -9,13 +9,15 @@ Button(x,y,(float)MeasureText(ptext.c_str(),size)*size,size)
 }
 
 
-bool ButtonText::Draw()
+enum ButtonState ButtonText::Draw()
 {
-	bool rb = Button::Draw();
-
+	enum ButtonState state = Button::Draw();
 	Rectangle r = GetRect();
 	DrawRectangleRec(r,color);
-	DrawText(text.c_str(),(int)r.x,(int)r.y,sizefont,WHITE);
-	return rb;
+	if(state==ButtonSelect)
+		DrawText(text.c_str(),(int)r.x,(int)r.y,sizefont,BLACK);
+	else
+		DrawText(text.c_str(),(int)r.x,(int)r.y,sizefont,WHITE);
+	return state;
 }
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 DSRC="src/"
+SQLITELIN="dep/sqlite3/linux"
+SQLITEWIN="dep/sqlite3/window"
 LINUXSTAT=1 # 1 static build, 0 not
 LUALINUX="dep/lua-5.4.2/lua_linux"
 LUAWIN="dep/lua-5.4.2/lua_win"
@@ -14,20 +16,20 @@ CC=gcc
 if [ -f "src/main.cpp" ];then
 	CC=g++
 fi
-CFLAGS="-g -Wall -L${RAYLIBLIN}/lib -L${LUALINUX}/lib -llua -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
-INC="-I../${RAYLIBLIN}/include -I../${LUALINUX}/include -Isrc"
+CFLAGS="-g -Wall -L${SQLITELIN}/lib -lsqlite3 -L${RAYLIBLIN}/lib -L${LUALINUX}/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
+INC="-I../${RAYLIBLIN}/include -I../${LUALINUX}/include -I../${SQLITELIN}/include -Isrc"
 EXEC="exodus"
 DOBJ="build/linux64/"
 
 
 CC2=i686-w64-mingw32-gcc
-CFLAGS2="-g -Wall -lm -L${LUAWIN}/lib -llua -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc" 
+CFLAGS2="-g -Wall -lm -L${SQLITEWIN}/lib -lsqlite3 -L${LUAWIN}/lib -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc"
 if [ -f "src/main.cpp" ];then
 	CC2=i686-w64-mingw32-g++
-	CFLAGS2="-g -Wall -lm -L${LUAWIN}/lib -llua -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc -static-libstdc++" 
+	CFLAGS2="-g -Wall -lm -L${SQLITEWIN}/lib -lsqlite3 -L${LUAWIN}/lib -llua -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc -static-libstdc++"
 fi
 #-static-libstdc++ -static-libgcc"
-INC2="-I../${LUAWIN}/include -I../${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
+INC2="-I../${SQLITEWIN}/include -I../${LUAWIN}/include -I../${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
 EXEC2=${EXEC}".exe"
 DOBJ2="build/win86/"
 

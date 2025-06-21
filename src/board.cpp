@@ -9,21 +9,22 @@ void Board::_Set(int x, int y, Cart cart)
 	_lstcart[y][x]=cart;
 }
 
-void Board::_Click(int x, int y)
+void Board::_Click(int x, int y,CartManager cartman)
 {
 	Cart cart = *_Get(x,y);
 	if(cart.IsExist() && _cselect.IsNull())
 	{
 		Select(cart);
 		_Set(x,y,Cart());
+		_pselect = {(float)x,(float)y};
 	}
-	else if(y==5 && cart.IsNull() && _cselect.IsNull())
+	else if(cart.IsNull() && _cselect.IsNull())
 	{
-		_Set(x,y,Generate());
+		_Set(x,y,cartman.Generate());
 	}
 }
 
-void Board::_ReleaseClick(int x, int y)
+void Board::_ReleaseClick(int x, int y,CartManager cartman)
 {
 	Cart* cart = _Get(x,y);
 	if(cart->IsNull() &&
@@ -43,26 +44,22 @@ void Board::_ReleaseClick(int x, int y)
 		)
 		{
 			//fuse cart
-			if(cart->Fuse(_cselect))
+			if(cartman.Fusion(cart,_cselect)
+			)
 				Deselect();
 
 		}
-		else if(cart->GetType()==CartTypeMonster &&
-			_cselect.GetType()==CartTypeEquip)
+		else if(cart->Equip(_cselect))
 		{
-			if(cart->GetEquipEffet()==CartEffetNULL &&
-				cart->Equip(_cselect))
-			{
-				Deselect();
-			}
+			Deselect();
+
 		}
 	}
 }
 
-
-
 Board::Board()
 {
+	btntxt = new ButtonText(23,23,"next turn",16,BLUE);
 	Cart c;
 	for(int iy=0;iy<BoardHeight;iy++)
 	{
@@ -171,62 +168,84 @@ bool Board::IsAttack(int x, int y, int x2, int y2)
 }
 
 
-#define LUCKPOUR(p) (rand()%101 < p)
-Cart Board::Generate()
-{
-	Cart c =  CartItem(CartObjHeal);
-	if(LUCKPOUR(10))
-	{
-		if(LUCKPOUR(50))
-			c = CartEquip(CartEquipAttack);
-		else if(LUCKPOUR(50))
-			c = CartEquip(CartEquipDefence);
-		else if(LUCKPOUR(50))
-			c = CartEquip(CartEquipRange);//cartequip.at(r2);
-	}//return CartEquip("sword");
-	else if(LUCKPOUR(30))
-	{
-		if(LUCKPOUR(50))
-			c = CartItem(CartObjHeal);
-		else if(LUCKPOUR(50))
-			c = CartItem(CartObjDamage);
-	}
-	else
-	{
-		c = CartMonster("sheep",1);
-	}
-	return c;
-}
-
-
 bool collide(int x,int y,int w,int h,int x2,int y2,int w2,int h2)
 {
 	if(x<x2+w2 && y<y2+h2 && x2<x+w && y2<y+h) return true;
 	return false;
 }
 
-
-void Board::Draw(TurnManager turnmanager)
+void Board::DrawRange()
 {
+	if(!_cselect.IsNull() &&
+		_cselect.GetType()==CartTypeMonster)
+	{
+		Vector2 v2 = _pselect;
+		int x = v2.x;
+		int y = v2.y;
+		TeamNumb team = GetTeam(y);
+		int range = 1;
+		const int vw = _cselect.GetWidth();
+		const int vh = _cselect.GetHeight();
 
+		if(_cselect.GetEquipEffet()==CartEquipRange)
+		{
+			range = 2;
+		}
+		//if(y==2 || y==3)
+		//{
+			if(team==Team1)
+			{
+
+			}
+			else if(team==Team2)
+			{
+				for(int i=1;i<range+1;i++)
+				{
+					int ly = y-i;
+					if(ly==2 || ly==1)
+					{
+						Vector2 vr = _posb[y-i][x];
+						if(!_lstcart[y-1][x].IsNull())
+						DrawRectangle(vr.x,vr.y,vw,vh,BLUE);
+					}
+
+				}
+			}
+		//}
+	}
+}
+
+void Board::_UITurn(TurnManager* turnmanager)
+{
+	DrawText(TextFormat("turn player %d",turnmanager->GetCurantTurn()),-10+GetRenderWidth()/2,23,19,WHITE);
+	if(btntxt->Draw()==ButtonPress)
+	{
+		turnmanager->NextTurn();
+	}
+}
+
+void Board::_UIBoard(TurnManager* turnmanager, CartManager cartman)
+{
+	DrawLine(0,3+GetRenderHeight()/2,GetRenderWidth(),3+GetRenderHeight()/2,WHITE);
 	for(int j=0;j<BoardHeight;j++)
 		for(int i=0;i<BoardWidth;i++)
 		{
 			Cart c = *_Get(i,j);
 			Vector2 pos = _posb[j][i];
 
-			if(j>2 && turnmanager.GetCurantTurn()==TurnPlayer1)
+			if((j<=2 && turnmanager->GetCurantTurn()==TurnPlayer0) ||
+				(j>2 && turnmanager->GetCurantTurn()==TurnPlayer1))
 			{
 				if(collide( pos.x,
 					pos.y,c.GetWidth(),c.GetHeight(),GetMouseX(),GetMouseY(),10,10))
 				{
 					if( IsMouseButtonDown(0))
 					{
-						_Click(i,j);
+						_Click(i,j,cartman);
 					}
 					else if( IsMouseButtonReleased(0))
 					{
-						_ReleaseClick(i,j);
+						_ReleaseClick(i,j,cartman);
 					}
 				}
 			}
@@ -234,7 +253,13 @@ void Board::Draw(TurnManager turnmanager)
 			c.Draw(pos.x,pos.y);
 			if(j==0 || j==5)
 			{
-				c.DrawBoardHand(pos.x,pos.y);
+				TeamNumb tn = GetTeam(j);
+				TurnId tt = turnmanager->GetCurantTurn();
+				if((tn==Team1 && tt==TurnPlayer0) ||
+					(tn==Team2 && tt==TurnPlayer1))
+					c.DrawBoardHand(pos.x,pos.y,true);
+				else
+					c.DrawBoardHand(pos.x,pos.y,false);
 			}
 			else c.DrawBoard(pos.x,pos.y);
 
@@ -246,4 +271,14 @@ void Board::Draw(TurnManager turnmanager)
 							  GetMouseY()-c.GetHeight()/2);
 			}
 		}
+	DrawRange();
+}
+
+
+void Board::Draw(TurnManager* turnmanager,CartManager cartman)
+{
+
+	_UITurn(turnmanager);
+	_UIBoard(turnmanager,cartman);
+
 }
